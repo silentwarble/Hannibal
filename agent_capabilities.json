@@ -1,0 +1,14 @@
+{
+  "os": ["Windows"],
+  "languages": ["C"] ,
+  "features": {
+    "mythic": [],
+    "custom": []
+  },
+  "payload_output": ["shellcode"],
+  "architectures": ["x86_64"],
+  "c2": ["http"],
+  "mythic_version": "3.3.1",
+  "agent_version": "1.0.0",
+  "supported_wrappers": []
+}

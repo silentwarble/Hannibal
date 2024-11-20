@@ -1,0 +1,82 @@
+# Generates a fully position independent .bin
+
+# TODO: Get header change tracking working. For now if you change headers you will need to clean and rebuild.
+
+#---------- Performance  ----------#
+
+# MAKEFLAGS += -s -j1
+MAKEFLAGS += -s -j$(NUMBER_OF_PROCESSORS)
+
+#---------- Project Settings  ----------#
+
+PROJECT := hannibal
+CC_X64	:= x86_64-w64-mingw32-g++
+
+#---------- Compiler Flags  ----------#
+
+# https://gcc.gnu.org/onlinedocs/gcc/Code-Gen-Options.html
+# https://gcc.gnu.org/onlinedocs/gcc/Cygwin-and-MinGW-Options.html
+# https://forum.tinycorelinux.net/index.php/topic,26375.0.html
+
+CFLAGS := -Os -fno-asynchronous-unwind-tables -nostdlib 
+CFLAGS += -nolibc -nostdlib++ 
+CFLAGS += -fno-ident -fpack-struct=8 -falign-functions=1
+CFLAGS += -s -ffunction-sections -falign-jumps=1 -w
+CFLAGS += -falign-labels=1 -fPIC
+CFLAGS += -Iinclude -masm=intel -fpermissive -mrdrnd
+CFLAGS += -D PIC_BUILD -D PROFILE_MYTHIC_HTTP
+
+#---------- Linker Flags  ----------#
+
+LDFLAGS := -Wl,-Tscripts/Linker.ld
+LDFLAGS += -Wl,-s,--no-seh,--enable-stdcall-fixup
+
+#---------- Paths ----------#
+
+ASM_DIR := asm/x64
+SRC_DIR := src
+OBJ_DIR := bin/obj
+BIN_DIR := bin
+SRC_FILES := $(wildcard $(SRC_DIR)/*.c)
+OBJ_FILES := $(SRC_FILES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+ASM_FILES := $(wildcard $(ASM_DIR)/*.asm)
+ASM_OBJ_FILES := $(ASM_FILES:asm/x64/%.asm=bin/obj/%.o)
+
+#---------- Targets ----------#
+
+all: $(BIN_DIR)/$(PROJECT).exe
+
+# A full build with all the commands takes ~2min on 2 core 2gb of ram in a Mythic container.
+# If you are not going to be adding/removing commands then you can remove the clean and the rms.
+# Just delete hannibal.o, hannibal_tasking.o, hannibal_resolve_pointers.o, and profile_mythic_http.o
+# since they read in config from config.h and need to be recompiled.
+# You'll get really fast recompile that way.
+$(BIN_DIR)/$(PROJECT).exe: clean $(ASM_OBJ_FILES) $(OBJ_FILES)
+	@ echo "[+] Linking x64 Executable"
+	@ $(CC_X64) bin/obj/*.o -o $(BIN_DIR)/$(PROJECT).exe $(CFLAGS) $(LDFLAGS)
+	@python scripts/build.py -f $(BIN_DIR)/$(PROJECT).exe -o $(BIN_DIR)/$(PROJECT).bin
+	@ del /q bin\obj\*.o 2>nul
+	@ del /q bin\*.exe 2>nul
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	@echo "[+] Compiling $? -> $@"
+	@ $(CC_X64) -o $@ -c  $? $(CFLAGS) $(LDFLAGS)
+
+$(ASM_OBJ_FILES): $(OBJ_DIR)/%.o: asm/x64/%.asm
+	@echo "[+] Assembling $? -> $@"
+	@ nasm -f win64 $? -o $@
+
+#---------- Utility ----------#
+
+clean:
+	@ del /q bin\obj\*.o 2>nul
+	@ del /q bin\obj\*.s 2>nul
+	@ del /q bin\obj\*.ii 2>nul
+	@ del /q bin\*.bin 2>nul
+	@ del /q bin\*.exe 2>nul
+
+print:
+	@echo "SRC_FILES: $(SRC_FILES)"
+	@echo "OBJ_FILES: $(OBJ_FILES)"
+	@echo "ASM_FILES: $(ASM_FILES)"
+	@echo "ASM_OBJ_FILES": $(ASM_OBJ_FILES)"

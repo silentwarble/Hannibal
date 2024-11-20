@@ -1,0 +1,66 @@
+# Generates an exe with all debugging symbols on for easy stepping.
+
+# TODO: Get header change tracking working. For now if you change headers you will need to clean and rebuild.
+
+#---------- Performance  ----------#
+
+# MAKEFLAGS += -s -j1
+MAKEFLAGS += -s -j$(NUMBER_OF_PROCESSORS)
+
+#---------- Project Settings  ----------#
+
+PROJECT := hannibal
+CC_X64	:= x86_64-w64-mingw32-g++
+
+#---------- Compiler Flags  ----------#
+
+DEBUG_CFLAGS := -O0 -Iinclude -D DEBUG_BUILD -D PROFILE_MYTHIC_HTTP
+DEBUG_CFLAGS += -fpermissive -Wunknown-pragmas -Wignored-qualifiers -w
+
+#---------- Linker Flags  ----------#
+
+DEBUG_LDFLAGS = -g -m64
+
+#---------- Paths ----------#
+
+SRC_DIR := src
+OBJ_DIR := bin/obj
+BIN_DIR := bin
+SRC_FILES := $(wildcard $(SRC_DIR)/*.c)
+OBJ_FILES := $(SRC_FILES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+
+# This makefile creates a normal .exe, so the stub_wrapper and hannibal_initialize.c can't be part of this build.
+SRC_FILES_DEBUG := $(filter-out src/hannibal_initialize.c, $(SRC_FILES))
+OBJ_FILES_DEBUG := $(SRC_FILES_DEBUG:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+
+#---------- Targets ----------#
+
+all: $(BIN_DIR)/$(PROJECT).exe
+
+# A full build with all the commands takes ~2min on 2 core 2gb of ram in a Mythic container.
+# If you're not going to be adding/removing commands then you can remove the clean and the rms.
+# Just delete hannibal.o, hannibal_tasking.o, hannibal_resolve_pointers.o, and profile_mythic_http.o
+# since they read in config from config.h and need to be recompiled.
+# You'll get really fast recompile that way.
+$(BIN_DIR)/$(PROJECT).exe: clean $(OBJ_FILES_DEBUG)
+	@ echo "[+] Linking x64 Executable"
+	@ $(CC_X64) bin/obj/*.o -o $(BIN_DIR)/$(PROJECT).exe $(DEBUG_CFLAGS) $(DEBUG_LDFLAGS)
+	@ del /q bin\obj\*.o 2>nul
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c 
+	@echo "[+] Compiling $? -> $@"
+	@ $(CC_X64) -o $@ -c  $? $(DEBUG_CFLAGS) $(DEBUG_LDFLAGS)
+
+#---------- Utility ----------#
+
+clean:
+	@ del /q bin\obj\*.o 2>nul
+	@ del /q bin\obj\*.s 2>nul
+	@ del /q bin\obj\*.ii 2>nul
+	@ del /q bin\*.bin 2>nul
+
+print:
+	@echo "SRC_FILES_DEBUG: $(SRC_FILES_DEBUG)"
+	@echo "SRC_FILES: $(SRC_FILES)"
+	@echo "OBJ_FILES: $(OBJ_FILES)"
+	@echo "OBJ_FILES_DEBUG: $(OBJ_FILES_DEBUG)"
