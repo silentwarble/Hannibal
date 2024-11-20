@@ -74,7 +74,7 @@ The HTTP profile calls back to the Mythic server over the basic, non-dynamic pro
  - This is an initial release agent written in PIC C with zero exception handling. There is a high likelihood there are bugs. Test extensively before using in live Ops.
  - Hannibal needs much more field testing before it is fully Op ready. Have backup channels.
  - Hannibal makes no promises regarding evasion.
- - Hannibal has only been tested with Mythic v3.3.1-rc22.
+ - Hannibal has only been tested with Mythic v3.3.1-rc25.
  - Hannibal has only been tested on Windows 11 23H2.
  - Hannibal has only been executed via the included loader and as a debug exe. Your invocation method will need testing.
  - The Mythic builds only give back shellcode. If you want an exe build with debug_makefile.
