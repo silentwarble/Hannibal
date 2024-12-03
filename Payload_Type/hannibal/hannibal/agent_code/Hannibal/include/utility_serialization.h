@@ -18,8 +18,8 @@ UINT32 ReadUint32(UINT8 **buffer);
 
 UINT8* ReadBytes(UINT8 **buffer, UINT32 length);
 
-char* ReadString(UINT8 **buffer, UINT32 length);
-wchar_t* ReadStringW(UINT8 **buffer, UINT32 length);
+PCHAR ReadString(UINT8 **buffer, UINT32 length);
+PWCHAR ReadStringW(UINT8 **buffer, UINT32 length);
 
 DWORD pic_htonl(DWORD hostlong);
 
