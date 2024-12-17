@@ -69,7 +69,7 @@ sudo -E ./mythic-cli install github https://github.com/MythicAgents/Hannibal.git
 
 ### [HTTP Profile](https://github.com/MythicC2Profiles/http)
 
-The HTTP profile calls back to the Mythic server over the basic, non-dynamic profile. Currently Hannibal only supports POST requests, User Agent, POST URI, sleep, jitter modifications. Toggle key-exchange off as that is not supported.
+The HTTP profile calls back to the Mythic server over the basic, non-dynamic profile. Currently Hannibal only supports POST requests, User Agent, POST URI, sleep, jitter modifications, and custom HTTP headers. Toggle key-exchange off as that is not supported.
 
 ## Notice
 
