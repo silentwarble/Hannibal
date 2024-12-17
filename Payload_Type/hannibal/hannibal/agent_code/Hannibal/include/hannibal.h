@@ -178,6 +178,7 @@ typedef struct _INSTANCE {
         PTR_OF_TYPE( InternetSetOptionW );
         PTR_OF_TYPE( InternetCloseHandle ); 
         PTR_OF_TYPE( InternetQueryOptionW ); 
+        PTR_OF_TYPE( HttpAddRequestHeadersW );
 
 
         // Advapi32.dll

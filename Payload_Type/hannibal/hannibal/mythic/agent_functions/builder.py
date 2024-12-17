@@ -22,7 +22,7 @@ class hannibal(PayloadType):
         SupportedOS.Windows
     ]
 
-    version = "v1.0.0"
+    version = "v1.0.2"
     wrapper = False
     wrapped_payloads = []
 
@@ -84,6 +84,13 @@ class hannibal(PayloadType):
                     config_dict["callback_jitter"] = val
                 elif (key == "headers"):
                     config_dict["user_agent"] = val["User-Agent"]
+                    
+                    custom_headers = []
+                    for header_key, header_value in val.items():
+                        if header_key != "User-Agent":  
+                            custom_headers.append(f"{header_key}: {header_value}")
+                    config_dict["custom_headers"] = custom_headers
+
                 elif (key == "get_uri"):
                     config_dict["get_uri"] = val
                 elif (key == "post_uri"):
@@ -111,6 +118,13 @@ class hannibal(PayloadType):
             "REQUIRE_DLL_WS2_32": ["INCLUDE_CMD_IPINFO"],
         }
 
+        custom_headers_line = ""
+        if custom_headers:
+            custom_headers_line += '#define CONFIG_CUSTOM_HEADERS {'
+            for header in custom_headers:
+                custom_headers_line += f'L"{header}", '
+            custom_headers_line = custom_headers_line.rstrip(', ') + '}'
+
         # {config_dict["callback_protocol"]}://
         line = "#define PIC_BUILD\n" 
         line += "#define PROFILE_MYTHIC_HTTP\n" 
@@ -118,6 +132,7 @@ class hannibal(PayloadType):
         line += f'#define CONFIG_SLEEP_JITTER {config_dict["callback_jitter"]}\n'
         line += f'#define CONFIG_HOST L"{config_dict["callback_host"]}"\n'
         line += f'#define CONFIG_UA L"{config_dict["user_agent"]}"\n'
+        line += custom_headers_line + "\n"
         line += f'#define CONFIG_POST_URI L"/{config_dict["post_uri"]}"\n'
         line += f'#define CONFIG_UUID "{self.uuid}"\n'
         enc_key = base64.b64decode(config_dict["enc_key"])

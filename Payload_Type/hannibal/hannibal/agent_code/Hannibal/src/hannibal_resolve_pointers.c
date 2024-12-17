@@ -109,6 +109,7 @@ SECTION_CODE VOID hannibal_resolve_pointers()
     hannibal_instance_ptr->Win32.InternetCloseHandle = get_func_ptr_from_module_eat(hannibal_instance_ptr->Modules.WinInet, HASH_STR("InternetCloseHandle"));
     hannibal_instance_ptr->Win32.InternetSetOptionW = get_func_ptr_from_module_eat(hannibal_instance_ptr->Modules.WinInet, HASH_STR("InternetSetOptionW"));
     hannibal_instance_ptr->Win32.InternetQueryOptionW = get_func_ptr_from_module_eat(hannibal_instance_ptr->Modules.WinInet, HASH_STR("InternetQueryOptionW"));
+    hannibal_instance_ptr->Win32.HttpAddRequestHeadersW = get_func_ptr_from_module_eat(hannibal_instance_ptr->Modules.WinInet, HASH_STR("HttpAddRequestHeadersW"));
 
 #endif // WININET
 

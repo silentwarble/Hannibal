@@ -74,6 +74,15 @@ SECTION_CODE from_utility_http_wininet_msg http_wininet_request(to_utility_http_
 	// 	NULL
     // );
 
+#ifdef CONFIG_CUSTOM_HEADERS
+    LPCWSTR headers[] = CONFIG_CUSTOM_HEADERS;
+    int header_count = sizeof(headers) / sizeof(headers[0]);
+
+    for (int i = 0; i < header_count; i++) {
+        hannibal_instance_ptr->Win32.HttpAddRequestHeadersW(hHttpFile, headers[i], -1, HTTP_ADDREQ_FLAG_ADD);
+    }
+#endif
+
     hannibal_instance_ptr->Win32.InternetSetOptionW(hHttpFile, INTERNET_OPTION_SEND_TIMEOUT, &SEND_TIMEOUT, sizeof(SEND_TIMEOUT));
     hannibal_instance_ptr->Win32.InternetSetOptionW(hHttpFile, INTERNET_OPTION_RECEIVE_TIMEOUT, &RECEIVE_TIMEOUT, sizeof(RECEIVE_TIMEOUT));
 
