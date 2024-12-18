@@ -22,7 +22,7 @@ class hannibal(PayloadType):
         SupportedOS.Windows
     ]
 
-    version = "v1.0.2"
+    version = "v1.0.3"
     wrapper = False
     wrapped_payloads = []
 
