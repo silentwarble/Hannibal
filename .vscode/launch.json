@@ -1,0 +1,29 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(gdb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "C:\\code\\PUBLIC\\Hannibal\\Payload_Type\\hannibal\\hannibal\\agent_code\\Hannibal\\bin\\hannibal.exe",
+            "args": [                
+            ],
+            "stopAtEntry": false,
+            "cwd": "C:\\code\\PUBLIC\\Hannibal\\Payload_Type\\hannibal\\hannibal\\agent_code\\Hannibal",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "C:\\ProgramData\\mingw64\\mingw64\\bin\\gdb.exe",
+            "setupCommands": [
+                {
+                    "description": "Use GDB",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        }
+    ]
+}

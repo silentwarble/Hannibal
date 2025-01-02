@@ -26,6 +26,8 @@ CFLAGS += -falign-labels=1 -fPIC
 CFLAGS += -Iinclude -masm=intel -fpermissive -mrdrnd
 CFLAGS += -D PIC_BUILD -D PROFILE_MYTHIC_HTTP
 
+DEPFLAGS = -MT $@ -MMD -MP -MF $(DEP_DIR)/$(*F).d
+
 #---------- Linker Flags  ----------#
 
 LDFLAGS := -Wl,-Tscripts/Linker.ld
@@ -37,8 +39,10 @@ ASM_DIR := asm/x64
 SRC_DIR := src
 OBJ_DIR := bin/obj
 BIN_DIR := bin
+DEP_DIR := $(BIN_DIR)/deps
 SRC_FILES := $(wildcard $(SRC_DIR)/*.c)
 OBJ_FILES := $(SRC_FILES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+DEP_FILES := $(SRC_FILES:$(SRC_DIR)/%.c=$(DEP_DIR)/%.d)
 ASM_FILES := $(wildcard $(ASM_DIR)/*.asm)
 ASM_OBJ_FILES := $(ASM_FILES:asm/x64/%.asm=bin/obj/%.o)
 
@@ -51,20 +55,25 @@ all: $(BIN_DIR)/$(PROJECT).exe
 # Just delete hannibal.o, hannibal_tasking.o, hannibal_resolve_pointers.o, and profile_mythic_http.o
 # since they read in config from config.h and need to be recompiled.
 # You'll get really fast recompile that way.
-$(BIN_DIR)/$(PROJECT).exe: clean $(ASM_OBJ_FILES) $(OBJ_FILES)
+$(BIN_DIR)/$(PROJECT).exe: $(ASM_OBJ_FILES) $(OBJ_FILES)
 	@ echo "[+] Linking x64 Executable"
 	@ $(CC_X64) bin/obj/*.o -o $(BIN_DIR)/$(PROJECT).exe $(CFLAGS) $(LDFLAGS)
 	@python scripts/build.py -f $(BIN_DIR)/$(PROJECT).exe -o $(BIN_DIR)/$(PROJECT).bin
-	@ del /q bin\obj\*.o 2>nul
-	@ del /q bin\*.exe 2>nul
-
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	@echo "[+] Compiling $? -> $@"
-	@ $(CC_X64) -o $@ -c  $? $(CFLAGS) $(LDFLAGS)
+	
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(DEP_DIR)/%.d | $(DEP_DIR)
+	@echo "[+] Compiling $< -> $@"
+	@ $(CC_X64) -o $@ -c  $< $(DEPFLAGS) $(CFLAGS) $(LDFLAGS)
 
 $(ASM_OBJ_FILES): $(OBJ_DIR)/%.o: asm/x64/%.asm
 	@echo "[+] Assembling $? -> $@"
 	@ nasm -f win64 $? -o $@
+
+$(DEP_DIR):
+	@if not exist $(DEP_DIR) mkdir "$(DEP_DIR)"
+
+$(DEP_FILES):
+
+-include $(DEP_FILES)
 
 #---------- Utility ----------#
 
@@ -72,6 +81,7 @@ clean:
 	@ del /q bin\obj\*.o 2>nul
 	@ del /q bin\obj\*.s 2>nul
 	@ del /q bin\obj\*.ii 2>nul
+	@ del /q "$(DEP_DIR)"
 	@ del /q bin\*.bin 2>nul
 	@ del /q bin\*.exe 2>nul
 
@@ -79,4 +89,5 @@ print:
 	@echo "SRC_FILES: $(SRC_FILES)"
 	@echo "OBJ_FILES: $(OBJ_FILES)"
 	@echo "ASM_FILES: $(ASM_FILES)"
+	@echo "DEP_FILES: $(DEP_FILES)"
 	@echo "ASM_OBJ_FILES": $(ASM_OBJ_FILES)"

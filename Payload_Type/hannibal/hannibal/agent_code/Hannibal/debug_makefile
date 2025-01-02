@@ -17,6 +17,8 @@ CC_X64	:= x86_64-w64-mingw32-g++
 DEBUG_CFLAGS := -O0 -Iinclude -D DEBUG_BUILD -D PROFILE_MYTHIC_HTTP
 DEBUG_CFLAGS += -fpermissive -Wunknown-pragmas -Wignored-qualifiers -w
 
+DEPFLAGS = -MT $@ -MMD -MP -MF $(DEP_DIR)/$(*F).d
+
 #---------- Linker Flags  ----------#
 
 DEBUG_LDFLAGS = -g -m64
@@ -26,12 +28,16 @@ DEBUG_LDFLAGS = -g -m64
 SRC_DIR := src
 OBJ_DIR := bin/obj
 BIN_DIR := bin
+DEP_DIR := $(BIN_DIR)/deps
 SRC_FILES := $(wildcard $(SRC_DIR)/*.c)
 OBJ_FILES := $(SRC_FILES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+
+
 
 # This makefile creates a normal .exe, so the stub_wrapper and hannibal_initialize.c can't be part of this build.
 SRC_FILES_DEBUG := $(filter-out src/hannibal_initialize.c, $(SRC_FILES))
 OBJ_FILES_DEBUG := $(SRC_FILES_DEBUG:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+DEP_FILES_DEBUG := $(SRC_FILES_DEBUG:$(SRC_DIR)/%.c=$(DEP_DIR)/%.d)
 
 #---------- Targets ----------#
 
@@ -42,14 +48,20 @@ all: $(BIN_DIR)/$(PROJECT).exe
 # Just delete hannibal.o, hannibal_tasking.o, hannibal_resolve_pointers.o, and profile_mythic_http.o
 # since they read in config from config.h and need to be recompiled.
 # You'll get really fast recompile that way.
-$(BIN_DIR)/$(PROJECT).exe: clean $(OBJ_FILES_DEBUG)
+$(BIN_DIR)/$(PROJECT).exe: $(OBJ_FILES_DEBUG)
 	@ echo "[+] Linking x64 Executable"
 	@ $(CC_X64) bin/obj/*.o -o $(BIN_DIR)/$(PROJECT).exe $(DEBUG_CFLAGS) $(DEBUG_LDFLAGS)
-	@ del /q bin\obj\*.o 2>nul
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c 
-	@echo "[+] Compiling $? -> $@"
-	@ $(CC_X64) -o $@ -c  $? $(DEBUG_CFLAGS) $(DEBUG_LDFLAGS)
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(DEP_DIR)/%.d | $(DEP_DIR)
+	@echo "[+] Compiling $< -> $@"
+	@ $(CC_X64) -o $@ -c  $< $(DEPFLAGS) $(DEBUG_CFLAGS) $(DEBUG_LDFLAGS)
+
+$(DEP_DIR):
+	@if not exist $(DEP_DIR) mkdir "$(DEP_DIR)"
+
+$(DEP_FILES_DEBUG):
+
+-include $(DEP_FILES_DEBUG)
 
 #---------- Utility ----------#
 
@@ -57,6 +69,7 @@ clean:
 	@ del /q bin\obj\*.o 2>nul
 	@ del /q bin\obj\*.s 2>nul
 	@ del /q bin\obj\*.ii 2>nul
+	@ del /q "$(DEP_DIR)"
 	@ del /q bin\*.bin 2>nul
 
 print:
@@ -64,3 +77,4 @@ print:
 	@echo "SRC_FILES: $(SRC_FILES)"
 	@echo "OBJ_FILES: $(OBJ_FILES)"
 	@echo "OBJ_FILES_DEBUG: $(OBJ_FILES_DEBUG)"
+	@echo "DEP_FILES_DEBUG: $(DEP_FILES_DEBUG)"

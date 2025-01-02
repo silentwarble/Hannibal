@@ -120,6 +120,9 @@ typedef struct _INSTANCE {
         PTR_OF_TYPE( VirtualFree )
         PTR_OF_TYPE( VirtualAlloc )
         PTR_OF_TYPE( VirtualProtect )
+        PTR_OF_TYPE( HeapAlloc )
+        PTR_OF_TYPE( HeapFree )
+        PTR_OF_TYPE( GetProcessHeap )
         PTR_OF_TYPE( LoadLibraryA )
         PTR_OF_TYPE( GetLastError )
         PTR_OF_TYPE( FindNextFileW )
@@ -224,6 +227,7 @@ typedef struct _INSTANCE {
         UINT32 jitter;
         CHAR *uuid;
         BOOL checked_in;
+        HANDLE process_heap;
 
         // HTTP
         WCHAR *controller_host;

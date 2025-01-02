@@ -85,6 +85,14 @@ SECTION_CODE VOID hannibal_resolve_pointers()
     hannibal_instance_ptr->Win32.DeleteTimerQueue = get_func_ptr_from_module_eat(hannibal_instance_ptr->Modules.Kernel32, HASH_STR("DeleteTimerQueue"));
     hannibal_instance_ptr->Win32.CopyFileW = get_func_ptr_from_module_eat(hannibal_instance_ptr->Modules.Kernel32, HASH_STR("CopyFileW"));
 
+    hannibal_instance_ptr->Win32.HeapAlloc = hannibal_instance_ptr->Win32.GetProcAddress(hannibal_instance_ptr->Modules.Kernel32, "HeapAlloc");
+    hannibal_instance_ptr->Win32.HeapFree = hannibal_instance_ptr->Win32.GetProcAddress(hannibal_instance_ptr->Modules.Kernel32, "HeapFree");
+
+    // hannibal_instance_ptr->Win32.HeapAlloc = get_func_ptr_from_module_eat(hannibal_instance_ptr->Modules.Kernel32, HASH_STR("HeapAlloc"));
+    // hannibal_instance_ptr->Win32.HeapFree = get_func_ptr_from_module_eat(hannibal_instance_ptr->Modules.Kernel32, HASH_STR("HeapFree"));
+    hannibal_instance_ptr->Win32.GetProcessHeap = get_func_ptr_from_module_eat(hannibal_instance_ptr->Modules.Kernel32, HASH_STR("GetProcessHeap"));
+
+
 #endif // KERNEL32
 
 
