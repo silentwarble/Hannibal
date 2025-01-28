@@ -32,7 +32,7 @@ SECTION_CODE void cmd_cd(TASK t)
 
     LPCWSTR response_content;
     if(result){
-        response_content = (WCHAR *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, MAX_PATH*sizeof(WCHAR), MEM_COMMIT, PAGE_READWRITE);
+        response_content = (WCHAR *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, MAX_PATH*sizeof(WCHAR));
         DWORD len = hannibal_instance_ptr->Win32.GetCurrentDirectoryW(MAX_PATH, response_content);
     } else {
         response_content = L"Fail";

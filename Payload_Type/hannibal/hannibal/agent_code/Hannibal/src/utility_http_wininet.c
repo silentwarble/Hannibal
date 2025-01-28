@@ -129,7 +129,8 @@ SECTION_CODE from_utility_http_wininet_msg http_wininet_request(to_utility_http_
     }
 
     DWORD current_buffer_size = 4096;
-    LPVOID buffer = hannibal_instance_ptr->Win32.VirtualAlloc(NULL, current_buffer_size, MEM_COMMIT, PAGE_READWRITE);
+
+    LPVOID buffer = hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, current_buffer_size);
 
     if (buffer == NULL) {
         return;
@@ -142,7 +143,7 @@ SECTION_CODE from_utility_http_wininet_msg http_wininet_request(to_utility_http_
     while (TRUE) {
         if (total_bytes_read >= current_buffer_size) {
             DWORD new_buffer_size = current_buffer_size * 2;
-            LPVOID new_buffer = hannibal_instance_ptr->Win32.VirtualAlloc(NULL, new_buffer_size, MEM_COMMIT, PAGE_READWRITE);
+            LPVOID new_buffer = hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, new_buffer_size);
 
             if (new_buffer == NULL) {
                 break;

@@ -1,7 +1,5 @@
 # Generates a fully position independent .bin
 
-# TODO: Get header change tracking working. For now if you change headers you will need to clean and rebuild.
-
 #---------- Performance  ----------#
 
 # MAKEFLAGS += -s -j1
@@ -50,11 +48,6 @@ ASM_OBJ_FILES := $(ASM_FILES:asm/x64/%.asm=bin/obj/%.o)
 
 all: $(BIN_DIR)/$(PROJECT).exe
 
-# A full build with all the commands takes ~2min on 2 core 2gb of ram in a Mythic container.
-# If you are not going to be adding/removing commands then you can remove the clean and the rms.
-# Just delete hannibal.o, hannibal_tasking.o, hannibal_resolve_pointers.o, and profile_mythic_http.o
-# since they read in config from config.h and need to be recompiled.
-# You'll get really fast recompile that way.
 $(BIN_DIR)/$(PROJECT).exe: $(ASM_OBJ_FILES) $(OBJ_FILES)
 	@ echo "[+] Linking x64 Executable"
 	@ $(CC_X64) bin/obj/*.o -o $(BIN_DIR)/$(PROJECT).exe $(CFLAGS) $(LDFLAGS)

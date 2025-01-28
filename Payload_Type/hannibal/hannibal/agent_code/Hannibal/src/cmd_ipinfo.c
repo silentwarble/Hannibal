@@ -17,15 +17,15 @@ SECTION_CODE void cmd_ipinfo(TASK t)
     size_t CURRENT_BUFFER_SIZE = INITIAL_BUFFER_SIZE;
     size_t CURRENT_BUFFER_USAGE = 0;
 
-    UINT8 *response_content = (UINT8 *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, INITIAL_BUFFER_SIZE, MEM_COMMIT, PAGE_READWRITE);
+    UINT8 *response_content = (UINT8 *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, INITIAL_BUFFER_SIZE);
 
     ULONG out_len = sizeof(IP_ADAPTER_ADDRESSES);
-    PIP_ADAPTER_ADDRESSES pAddresses = (PIP_ADAPTER_ADDRESSES)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, out_len, MEM_COMMIT, PAGE_READWRITE);
+    PIP_ADAPTER_ADDRESSES pAddresses = (PIP_ADAPTER_ADDRESSES)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, out_len);
 
     // Get size. GAA_FLAG_INCLUDE_ALL_INTERFACES for disabled as well
     if (hannibal_instance_ptr->Win32.GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_GATEWAYS, NULL, pAddresses, &out_len) == ERROR_BUFFER_OVERFLOW) {
         hannibal_instance_ptr->Win32.VirtualFree(pAddresses, 0, MEM_RELEASE);
-        pAddresses = (PIP_ADAPTER_ADDRESSES)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, out_len, MEM_COMMIT, PAGE_READWRITE);
+        pAddresses = (PIP_ADAPTER_ADDRESSES)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, out_len);
     }
 
     if (hannibal_instance_ptr->Win32.GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_GATEWAYS, NULL, pAddresses, &out_len) == NO_ERROR) {

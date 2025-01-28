@@ -117,7 +117,7 @@ SECTION_CODE void buffer_append_alloc(UINT8 **buffer, size_t *current_size, size
 
     if(needed_size >= *current_size - sizeof(WCHAR)){
         size_t new_size = needed_size + 4096; 
-        UINT8* new_buffer = (UINT8*)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, new_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+        UINT8* new_buffer = (UINT8*)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, new_size);
         pic_memcpy(new_buffer, *buffer, *current_usage);
         hannibal_instance_ptr->Win32.VirtualFree(*buffer, 0, MEM_RELEASE); 
         *buffer = new_buffer;

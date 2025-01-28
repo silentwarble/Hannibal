@@ -16,7 +16,7 @@ SECTION_CODE void cmd_listdrives(TASK t)
     size_t CURRENT_BUFFER_SIZE = INITIAL_BUFFER_SIZE;
     size_t CURRENT_BUFFER_USAGE = 0;
 
-    UINT8 *response_content = (UINT8 *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, INITIAL_BUFFER_SIZE, MEM_COMMIT, PAGE_READWRITE);
+    UINT8 *response_content = (UINT8 *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, INITIAL_BUFFER_SIZE);
     
     DWORD drives = hannibal_instance_ptr->Win32.GetLogicalDrives(); // Get a bitmask of the drives
     WCHAR volume_name[MAX_PATH];

