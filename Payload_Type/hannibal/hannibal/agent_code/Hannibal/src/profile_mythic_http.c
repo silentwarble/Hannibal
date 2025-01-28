@@ -224,7 +224,7 @@ SECTION_CODE MYTHIC_HTTP_ENCRYPTION_MSG mythic_http_aes_decrypt(uint8_t *buffer,
         hmac[i] = ((CHAR*)hmac_ptr)[i];
     }
 
-    // Calcuate the SHA256_HMAC
+    // Calculate the SHA256_HMAC
 
     int iv_msg_size = sizeof(iv) + message_size;
 
