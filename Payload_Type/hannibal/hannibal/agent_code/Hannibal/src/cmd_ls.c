@@ -163,10 +163,10 @@ SECTION_CODE void cmd_ls(TASK t)
         task_enqueue(hannibal_instance_ptr->tasks.tasks_response_queue, &response_t);
 
         if (ls->path) {
-            hannibal_instance_ptr->Win32.VirtualFree(ls->path, 0, MEM_RELEASE);
+            hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, ls->path);
         }
         if (t.cmd) {
-            hannibal_instance_ptr->Win32.VirtualFree(t.cmd, 0, MEM_RELEASE);
+            hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, t.cmd);
         }
         return;
     }
@@ -215,7 +215,7 @@ SECTION_CODE void cmd_ls(TASK t)
                     for (int j = 0; j < buff_cursor; j++) {
                         newResponseContent[j] = response_content[j];
                     }
-                    hannibal_instance_ptr->Win32.VirtualFree(response_content, 0, MEM_RELEASE);
+                    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, response_content);
                     response_content = newResponseContent;
                     CURRENT_BUFFER_SIZE = newSize;
                 }
@@ -270,8 +270,8 @@ SECTION_CODE void cmd_ls(TASK t)
 
     task_enqueue(hannibal_instance_ptr->tasks.tasks_response_queue, &response_t);
 
-    hannibal_instance_ptr->Win32.VirtualFree(ls->path, 0, MEM_RELEASE);
-    hannibal_instance_ptr->Win32.VirtualFree(t.cmd, 0, MEM_RELEASE);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, ls->path);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, t.cmd);
 
     if (hFind != INVALID_HANDLE_VALUE) {
         hannibal_instance_ptr->Win32.FindClose(hFind);

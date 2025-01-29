@@ -30,8 +30,8 @@ SECTION_CODE void cmd_mkdir(TASK t)
         }
     }
 
-    hannibal_instance_ptr->Win32.VirtualFree(mk->path, 0, MEM_RELEASE);
-    hannibal_instance_ptr->Win32.VirtualFree(t.cmd, 0, MEM_RELEASE);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, mk->path);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, t.cmd);
     
 }
 

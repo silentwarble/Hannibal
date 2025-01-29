@@ -112,9 +112,9 @@ SECTION_CODE void cmd_cp(TASK t)
 
     task_enqueue(hannibal_instance_ptr->tasks.tasks_response_queue, &response_t);
 
-    hannibal_instance_ptr->Win32.VirtualFree(cp->src_path, 0, MEM_RELEASE);
-    hannibal_instance_ptr->Win32.VirtualFree(cp->dst_path, 0, MEM_RELEASE);
-    hannibal_instance_ptr->Win32.VirtualFree(t.cmd, 0, MEM_RELEASE);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, cp->src_path);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, cp->dst_path);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, t.cmd);
     
 }
 

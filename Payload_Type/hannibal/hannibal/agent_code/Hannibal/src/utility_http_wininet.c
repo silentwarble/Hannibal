@@ -153,7 +153,7 @@ SECTION_CODE from_utility_http_wininet_msg http_wininet_request(to_utility_http_
                 ((CHAR*)new_buffer)[i] = ((CHAR*)buffer)[i];
             }
 
-            hannibal_instance_ptr->Win32.VirtualFree(buffer, 0, MEM_RELEASE);
+            hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, buffer);
             buffer = new_buffer;
             current_buffer_size = new_buffer_size; 
         }

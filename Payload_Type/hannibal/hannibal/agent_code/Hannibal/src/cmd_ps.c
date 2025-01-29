@@ -128,7 +128,7 @@ SECTION_CODE void cmd_ps(TASK t)
                                     pic_memcpy(integrity_level, L"-", pic_strlenW(L"-")*sizeof(WCHAR));
                                 }
                             
-                                hannibal_instance_ptr->Win32.VirtualFree(pLabel, 0, MEM_RELEASE);
+                                hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, pLabel);
                             } 
                         }
 
@@ -158,7 +158,7 @@ SECTION_CODE void cmd_ps(TASK t)
                             }
                         }
                         
-                        hannibal_instance_ptr->Win32.VirtualFree(pTokenUser, 0, MEM_RELEASE);
+                        hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, pTokenUser);
 
                 } else { // if OpenProcessToken fails
                     pic_memcpy(user, L"-", pic_strlenW(L"-")*sizeof(WCHAR));
@@ -200,8 +200,8 @@ SECTION_CODE void cmd_ps(TASK t)
 
     } else { // if Process32FirstW
         hannibal_response(L"Error", t.task_uuid);
-        hannibal_instance_ptr->Win32.VirtualFree(response_content, 0, MEM_RELEASE);
-        hannibal_instance_ptr->Win32.VirtualFree(t.cmd, 0, MEM_RELEASE);
+        hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, response_content);
+        hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, t.cmd);
         return;
     }
 
@@ -215,7 +215,7 @@ SECTION_CODE void cmd_ps(TASK t)
 
     task_enqueue(hannibal_instance_ptr->tasks.tasks_response_queue, &response_t);
 
-    hannibal_instance_ptr->Win32.VirtualFree(t.cmd, 0, MEM_RELEASE);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, t.cmd);
     
 }
 

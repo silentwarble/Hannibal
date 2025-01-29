@@ -62,11 +62,11 @@ SECTION_CODE void cmd_execute_hbin(TASK t)
 
     // task_enqueue(hannibal_instance_ptr->tasks.tasks_response_queue, &response_t);
 
-    hannibal_instance_ptr->Win32.VirtualFree(in, 0, MEM_RELEASE);
-    hannibal_instance_ptr->Win32.VirtualFree(hbin_buff, 0, MEM_RELEASE);
-    hannibal_instance_ptr->Win32.VirtualFree(exec_hbin->args, 0, MEM_RELEASE);
-    hannibal_instance_ptr->Win32.VirtualFree(exec_hbin->hbin, 0, MEM_RELEASE);
-    hannibal_instance_ptr->Win32.VirtualFree(t.cmd, 0, MEM_RELEASE);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, in);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, hbin_buff);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, exec_hbin->args);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, exec_hbin->hbin);
+    hannibal_instance_ptr->Win32.HeapFree(hannibal_instance_ptr->config.process_heap, 0, t.cmd);
     // hannibal_instance_ptr->Win32.VirtualFree(t.task_uuid, 0, MEM_RELEASE); // Make sure your hbin sends a response so this gets freed in post_tasks
 
 }
